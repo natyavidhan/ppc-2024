@@ -1,30 +1,15 @@
-# from dotenv import load_dotenv
-# import os
-# from bardapi import Bard
+from bardapi import Bard
 
+from bardapi import BardCookies
 
-# load_dotenv()
+cookie_dict = {
+    "__Secure-1PSID": "egjP4T18AjffIk2CBL3i_Rf_XWHdyyRfM9uonNn-ih7HsSGeUKhIAKNEyrHqdEulqxdJNQ.",
+    "__Secure-1PSIDTS": "sidts-CjIBPVxjSgE0nPdG9ALtEvWPNTrPdTTsjGBjdli-lnkJgbjPt7e77Cnk037KFByBkA2HixAA",
+    "__Secure-1PSIDCC": "ABTWhQGnXcnotJkWb9jfomtkeOfqJuf7QQLMMz3XlVPckv_uQit3g7rBQFajArAAqKQWhPRZMw",
+    "__Secure-1PAPISID": "10DU3mWwvXrka-zg/A9xlK92-wiDEFzGzT",
+    # Any cookie values you want to pass session object.
+}
 
-# # Replace "YOUR_API_KEY" with the actual API Key obtained earlier
-# API_KEY = os.getenv("API_KEY")
+bard = BardCookies(cookie_dict=cookie_dict)
 
-# bard = Bard()
-# bard.get_answer("hello")['content']
-
-key="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"
-
-import openai 
-openai.api_key = key
-messages = [ {"role": "system", "content": "You are a intelligent assistant."} ] 
-while True: 
-    message = input("User : ") 
-    if message: 
-        messages.append( 
-            {"role": "user", "content": message}, 
-        ) 
-        chat = openai.ChatCompletion.create( 
-            model="gpt-3.5-turbo", messages=messages 
-        ) 
-    reply = chat.choices[0].message.content 
-    print(f"ChatGPT: {reply}") 
-    messages.append({"role": "assistant", "content": reply}) 
+print(bard.get_answer("Hello")['content'])
