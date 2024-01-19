@@ -1,3 +1,8 @@
-from faster_whisper import WhisperModel
-model = WhisperModel("medium", device="cuda", compute_type="float16")
-print(model.transcribe("/recording0.wav", beam_size=5)[0]['text'])
+import speech_recognition as sr
+
+r = sr.Recognizer()
+with sr.Microphone(3) as source:
+    print("Say something!")
+    audio = r.listen(source, phrase_time_limit=5)
+print("start")
+print(r.recognize_google(audio))
