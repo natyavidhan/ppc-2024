@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 
-log = lambda x: print(f"[{datetime().now()}] {x}")
+log = lambda x: print(f"[{datetime.now()}] {x}")
 
-log("Anisha v0.2")
+log("Anisha v0.3")
 log("loading environment variables")
 load_dotenv()
 
@@ -49,7 +49,6 @@ def ask_user():
     log("Asking user")
     try:
         with sr.Microphone() as source:
-            print("<say>")
             audio = r.listen(source, phrase_time_limit=5)
         query = r.recognize_google(audio)
         return query
@@ -59,10 +58,11 @@ def ask_user():
         return ask_user()
 
 def ask_bard(query):
-    ans = bard.get_answer(query + ". give short answer.")['content']
-    return clean(ans)
+    ans = bard.get_answer(query)['content']
+    return ans
 
 def conversate(text, side):
+    global conversation
     conversation.append(("bot" if side == 0 else "user", text))
 
 def see():
@@ -95,10 +95,12 @@ def approach():
 
 def interact():
     global state
+    global conversation
     if len(conversation) == 0:
         text = "Okay, Let me introduce myself first, my name is anisha, I am your personal AI stress relieving assistant, please tell me about your problem so i can help you with that."
     else:
         text = "Do you have anymore questions? please answer in positive or negative tone"
+        speak(text)
         user = ask_user()
         agree = ask_bard(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
         if "false" in agree.lower():
@@ -113,7 +115,11 @@ def interact():
     query = ask_user()
 
     conversate(query, 1)
-    answer = ask_bard("Create a comforting, supportive and short response as an AI stress reliever addressing the following user query: \n"+query)
+    answer = ask_bard(f"""Create a comforting, supportive and short minimal response as an AI stress reliever addressing the following user query: 
+
+"{query}"
+
+PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO EMOJIS NO IMAGES""")
     
     speak(answer)
     conversate(answer, 0)
