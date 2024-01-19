@@ -18,6 +18,7 @@ engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
 engine.setProperty('volume', 1.0)
+engine.setProperty('rate', 125) 
 
 r = sr.Recognizer()
 
@@ -38,19 +39,30 @@ def clean(text):
 def ai(text):
     conversation.append(f"Helper: {text}")
     engine.say(text)
+    engine.runAndWait()
+
 
 def ask():
-    with sr.Microphone() as source:
-        print("<say>")
-        audio = r.listen(source, phrase_time_limit=5)
-    query = r.recognize_google(audio)
-    return query
+    try:
+        with sr.Microphone() as source:
+            print("<say>")
+            audio = r.listen(source, phrase_time_limit=5)
+        query = r.recognize_google(audio)
+        return query
+    except sr.exceptions.UnknownValueError:
+        engine.say("Sorry, can you please repeat yourself?")
+        engine.runAndWait()
+        return ask()
+
 
 def user(text):
     conversation.append(f"User: {text}")
 
 def ask_bard(query, minimal=True) -> str:
-    bard.get_answer(query + ". give a short answer" if minimal else query)['content']
+    # conv = "speak as helper\n\n"
+    # conv += gen_conv_str()
+    # conv += "\n\nHelper:"
+    return bard.get_answer(query + ". give short answer.")['content']
 
 while True:
     if state == "see":
@@ -64,13 +76,13 @@ while True:
             face_roi = frame[y:y+h_, x:x+w]
             
             # cv2.imshow('Emotion Detection', face_roi)
-            print(".", end=" ")
+            print(".")
             h.pop(0)
             h.append(emotion)
 
         except Exception as e:
-            # print("error", e)
-            print("_", end=" ")
+            print("error", e)
+            print("_")
             h.pop(0)
             h.append(0)
 
@@ -84,16 +96,27 @@ while True:
             break
 
     elif state == "ask":
-        ai(f"Hello there, you look {emotion_g}. How may i help you?")
+        ai(f"Hello there, you look {emotion_g}. Do you want me to help you with anything?")
         query = ask()
-
+        user(query)
         agree = ask_bard(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{query}")
         if "false" in agree.lower():
             engine.say("Oh okay, have a nice day!")
+            engine.runAndWait()
             state="look"
         else:
             state = "interact"
         
+    elif state == "interact":
+        if len(conversation) == 2:
+            text = "Okay, Let me introduce myself first, my name is anisha, I am your personal AI stress relieving assistant, please tell me about your problem so i can help you with that."
+            # engine.say(text)
+            ai(text)
+        query = ask()
+        user(query)
+        ans = ask_bard(query)
+        print(ans)
+        ai(ans)
 
 
 cap.release()
