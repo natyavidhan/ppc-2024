@@ -1,9 +1,8 @@
 import cv2
 from deepface import DeepFace
 
-face_cascade = cv2.CascadeClassifier('env/Lib/site-packages/cv2/data/haarcascade_frontalface_default.xml')
+cap = cv2.VideoCapture(1)
 
-cap = cv2.VideoCapture(0)
 
 while True:
     try:

@@ -1,31 +1,40 @@
-import pyttsx3
-from bardapi import BardCookies
-import speech_recognition as sr
-import json
+import cv2
+from deepface import DeepFace
 
-cookie_dict = {i["name"]: i['value'] for i in json.load(open("cookies.json"))}
-bard = BardCookies(cookie_dict=cookie_dict)
+cap = cv2.VideoCapture(1)
 
-engine = pyttsx3.init()
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
-engine.setProperty('volume', 1.0)
+h=[0, 0, 0]
 
-r = sr.Recognizer()
+print("starting")
 
 while True:
-    with sr.Microphone() as source:
-        print("Say something!")
-        audio = r.listen(source, phrase_time_limit=5)
-    
-    print("transcribing...")
-    query = r.recognize_google(audio)
+    try:
+        ret, frame = cap.read()
 
-    print(f"Your query: {query}")
+        predictions = DeepFace.analyze(frame, actions=['emotion'], detector_backend="retinaface")
+        emotion = predictions[0]['dominant_emotion']
+        
+        x, y, w, h_ = predictions[0]['region'].values()
+        face_roi = frame[y:y+h_, x:x+w]
+        
+        # cv2.imshow('Emotion Detection', face_roi)
+        print(".", end=" ")
+        h.pop(0)
+        h.append(emotion)
 
-    print("processng...")
+    except Exception as e:
+        # print("error", e)
+        print("_", end=" ")
+        h.pop(0)
+        h.append(0)
 
-    ans = bard.get_answer(query + ". give a short answer")['content']
+    if h[0] == h[1] == h[2] != 0:
+        print(f"\nHello there! you look {h[0]}\n")
+        h = [0, 0, 0]
 
-    engine.say(ans)
-    engine.runAndWait()
+    if cv2.waitKey(1) == ord('q'):
+        break
+    # print("yes")
+
+cap.release()
+cv2.destroyAllWindows()
