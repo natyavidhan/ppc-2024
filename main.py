@@ -27,7 +27,7 @@ engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
 engine.setProperty('volume', 1.0)
-engine.setProperty('rate', 125) 
+engine.setProperty('rate', 160) 
 
 log("Setting up voice recognizer")
 r = sr.Recognizer()
@@ -36,6 +36,7 @@ h=[0, 0, 0]
 state = "see"
 emotion = None
 conversation = []
+backend = "mediapipe"
 
 def clean(text):
     pattern = r"[^\w.,0-9]+"
@@ -66,18 +67,21 @@ def conversate(text, side):
     conversation.append(("bot" if side == 0 else "user", text))
 
 def see():
+    print("seeing user")
     try:
+        print("test")
         ret, frame = cap.read()
-        predictions = DeepFace.analyze(frame, actions=['emotion'], detector_backend="retinaface")
+        predictions = DeepFace.analyze(frame, actions=['emotion'], detector_backend=backend)
         emotion = predictions[0]['dominant_emotion']
-        
+
         # x, y, w, h_ = predictions[0]['region'].values()
         # face_roi = frame[y:y+h_, x:x+w]
 
         h.pop(0)
         h.append(emotion)
 
-    except ValueError:
+    except ValueError as e:
+        print(e)
         h.pop(0)
         h.append(0)
 
@@ -115,11 +119,11 @@ def interact():
     query = ask_user()
 
     conversate(query, 1)
-    answer = ask_bard(f"""Create a comforting, supportive and short minimal response as an AI stress reliever addressing the following user query: 
+    answer = ask_bard(f"""Create a comforting, supportive and short minimal solution as an AI stress reliever addressing the following user query: 
 
 "{query}"
 
-PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO EMOJIS NO IMAGES""")
+PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO EMOJIS NO IMAGES, DO NOT ASK THEM ANY QUESTIONS, JUST RESPOND WITH THE SOLUTION""")
     
     speak(answer)
     conversate(answer, 0)
