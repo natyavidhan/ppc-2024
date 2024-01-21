@@ -100,8 +100,7 @@ while running:
     screen.blit(frame, rect)
 
     text_rect = pygame.Rect(w // 2, h // 1.5, 640 / 1080 * w, 960 / 1920 * h)
-    drawText(screen, "Great! Lists are a fundamental data structure in Python that allow you to store and organize collections of items. To create a list, you simply enclose a sequence of items in square brackets, like this: my_list = [1, 2, 3, 'apple', 'banana'].",
-                (0, 0, 0), text_rect, font)
+    drawText(screen, "",(0, 0, 0), text_rect, font)
 
 
     pygame.display.update()

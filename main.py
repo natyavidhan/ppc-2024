@@ -8,6 +8,8 @@ import re
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+import pygame
+import numpy as np
 
 log = lambda x: print(f"[{datetime.now()}] {x}")
 
@@ -32,26 +34,98 @@ engine.setProperty('rate', 160)
 log("Setting up voice recognizer")
 r = sr.Recognizer()
 
-h=[0, 0, 0]
+log("setting up window")
+pygame.font.init()
+
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+running = True
+
+font = pygame.font.Font("Comfortaa.ttf", 38)
+
+h = pygame.display.Info().current_h
+w = pygame.display.Info().current_w
+
+his=[0, 0, 0]
 state = "see"
 emotion = None
 conversation = []
 backend = "mediapipe"
+current_text=""
+current_speaker=""
 
-def clean(text):
-    pattern = r"[^\w.,0-9]+"
-    return re.sub(pattern, "", text)
+def drawText(surface, text, color, rect, font, aa=False, bkg=None):
+    rect = pygame.Rect(rect)
+    y = rect.top
+    lineSpacing = -2
+    fontHeight = font.size("Tg")[1]
+
+    while text:
+        i = 1
+        # if y + fontHeight > rect.bottom:
+        #     break
+        while font.size(text[:i])[0] < rect.width and i < len(text):
+            i += 1     
+        if i < len(text): 
+            i = text.rfind(" ", 0, i) + 1
+        if bkg:
+            image = font.render(text[:i], 1, color, bkg)
+            image.set_colorkey(bkg)
+        else:
+            image = font.render(text[:i], aa, color)
+        surface.blit(image, (rect.left-(rect.width//2), y-(rect.height//2)))
+        y += fontHeight + lineSpacing
+        text = text[i:]
+
+    return text
+
+def screen_cycle():
+    screen.fill((255, 255, 255))
+
+    head = pygame.font.Font("Comfortaa.ttf", 96).render("Anisha v1", True, (0, 0, 0))
+    rect = head.get_rect()
+    rect.center = (w // 2, h // 10)
+    screen.blit(head, rect)
+
+    c = font.render(f"Speaker: {current_speaker}", True, (0, 0, 0))
+    rect = c.get_rect()
+    rect.center = (w // 2, h // 2.5)
+    screen.blit(c, rect)
+
+    _, frame = cap.read()
+    frame = np.rot90(frame)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = pygame.surfarray.make_surface(frame)
+    rect = frame.get_rect()
+    rect.center = (w // 2, h // 4)
+    rect.width = 640 / 1080 * w
+    rect.height = 480 / 1920 * h
+    screen.blit(frame, rect)
+
+    text_rect = pygame.Rect(w // 2, h // 1.5, 640 / 1080 * w, 960 / 1920 * h)
+    drawText(screen, current_text, (0, 0, 0), text_rect, font)
+    pygame.display.update()
+
+def change_text(speaker, text):
+    global current_text
+    global current_speaker
+    current_speaker=speaker
+    current_text = text
+    screen_cycle()
 
 def speak(text):
+    change_text("Anisha", text)
     engine.say(text)
     engine.runAndWait()
 
 def ask_user():
     log("Asking user")
     try:
+        change_text("User", "Recognizing Voice...")
+        screen_cycle()
         with sr.Microphone() as source:
             audio = r.listen(source, phrase_time_limit=5)
         query = r.recognize_google(audio)
+        change_text("User", query)
         return query
     except sr.exceptions.UnknownValueError:
         log("[ERROR] Couldn't hear user, Attempting again...")
@@ -77,13 +151,13 @@ def see():
         # x, y, w, h_ = predictions[0]['region'].values()
         # face_roi = frame[y:y+h_, x:x+w]
 
-        h.pop(0)
-        h.append(emotion)
+        his.pop(0)
+        his.append(emotion)
 
     except ValueError as e:
         print(e)
-        h.pop(0)
-        h.append(0)
+        his.pop(0)
+        his.append(0)
 
 def approach():
     global state
@@ -93,6 +167,7 @@ def approach():
     
     if "false" in agree.lower():
         speak("Oh okay, have a nice day!")
+        change_text("", "")
         state="see"
     else:
         state = "interact"
@@ -109,6 +184,7 @@ def interact():
         agree = ask_bard(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
         if "false" in agree.lower():
             speak("Oh okay, have a nice day!")
+            change_text("", "")
             state="see"
             conversation=[]
             return
@@ -130,13 +206,17 @@ PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO EMOJIS NO IMAGES, DO NOT ASK T
 
 
 if __name__ == "__main__":
-    while True:
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
         if state == "see":
             see()
-            if h[0] == h[1] == h[2] != 0:
+            if his[0] == his[1] == his[2] != 0:
                 state = "approach"
-                emotion = h[0]
-                h = [0, 0, 0]
+                emotion = his[0]
+                his = [0, 0, 0]
 
         elif state == "approach":
             approach()
