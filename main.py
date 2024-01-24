@@ -29,7 +29,7 @@ engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
 engine.setProperty('volume', 1.0)
-engine.setProperty('rate', 160) 
+engine.setProperty('rate', 170) 
 
 log("Setting up voice recognizer")
 r = sr.Recognizer()
@@ -203,7 +203,7 @@ def interact():
     answer = ask_bard(f"""Create a comforting, supportive and short minimal solution as an AI stress reliever addressing the following user query: 
 
 "{query}"
-
+KEEP IT UNDER 100 WORDS
 PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO ASTERISKS NO EMOJIS NO IMAGES, DO NOT ASK THEM ANY QUESTIONS, JUST RESPOND WITH THE SOLUTION""")
     
     screen_cycle() 
@@ -219,10 +219,12 @@ if __name__ == "__main__":
         screen_cycle()
         if state == "see":
             see()
-            if his[0] == his[1] == his[2] != 0:
-                state = "approach"
-                emotion = his[0]
-                his = [0, 0, 0]
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_RETURN]:
+                if his[0] == his[1] == his[2] != 0:
+                    state = "approach"
+                    emotion = his[0]
+                    his = [0, 0, 0]
 
         elif state == "approach":
             approach()
