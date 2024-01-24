@@ -13,7 +13,7 @@ import numpy as np
 
 log = lambda x: print(f"[{datetime.now()}] {x}")
 
-log("Anisha v0.3")
+log("Anisha v2")
 log("loading environment variables")
 load_dotenv()
 
@@ -81,28 +81,31 @@ def drawText(surface, text, color, rect, font, aa=False, bkg=None):
 def screen_cycle():
     screen.fill((255, 255, 255))
 
-    head = pygame.font.Font("Comfortaa.ttf", 96).render("Anisha v1", True, (0, 0, 0))
+    head = pygame.font.Font("Comfortaa.ttf", 96).render("Anisha v2", True, (0, 0, 0))
     rect = head.get_rect()
-    rect.center = (w // 2, h // 10)
+    rect.center = (w // 2, h // 12)
     screen.blit(head, rect)
 
     c = font.render(f"Speaker: {current_speaker}", True, (0, 0, 0))
     rect = c.get_rect()
-    rect.center = (w // 2, h // 2.5)
+    rect.center = (w // 2, h //1.8)
     screen.blit(c, rect)
 
-    _, frame = cap.read()
-    frame = np.rot90(frame)
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = pygame.surfarray.make_surface(frame)
-    rect = frame.get_rect()
-    rect.center = (w // 2, h // 4)
-    rect.width = 640 / 1080 * w
-    rect.height = 480 / 1920 * h
+    try:
+        _, frame = cap.read()
+        frame = np.rot90(frame)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = pygame.surfarray.make_surface(frame)
+    except:
+        frame = pygame.Surface((320, 240))
+    rect = frame.get_rect() 
+    rect.center = (w // 2, h // 3)
+    rect.width = 320
+    rect.height = 240
     screen.blit(frame, rect)
 
-    text_rect = pygame.Rect(w // 2, h // 1.5, 640 / 1080 * w, 960 / 1920 * h)
-    drawText(screen, current_text, (0, 0, 0), text_rect, font)
+    text_rect = pygame.Rect(w // 2, h // 1.2, 640 / 1080 * w, 960 / 1920 * h)
+    drawText(screen, current_text, (0, 0, 0), text_rect, pygame.font.Font("Comfortaa.ttf", 24))
     pygame.display.update()
 
 def change_text(speaker, text):
@@ -125,7 +128,9 @@ def ask_user():
         with sr.Microphone() as source:
             audio = r.listen(source, phrase_time_limit=5)
         query = r.recognize_google(audio)
+        screen_cycle()
         change_text("User", query)
+        screen_cycle()
         return query
     except sr.exceptions.UnknownValueError:
         log("[ERROR] Couldn't hear user, Attempting again...")
@@ -133,7 +138,7 @@ def ask_user():
         return ask_user()
 
 def ask_bard(query):
-    ans = bard.get_answer(query)['content']
+    ans = bard.get_answer(query)['content'].replace("*", "")
     return ans
 
 def conversate(text, side):
@@ -199,9 +204,10 @@ def interact():
 
 "{query}"
 
-PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO EMOJIS NO IMAGES, DO NOT ASK THEM ANY QUESTIONS, JUST RESPOND WITH THE SOLUTION""")
+PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO ASTERISKS NO EMOJIS NO IMAGES, DO NOT ASK THEM ANY QUESTIONS, JUST RESPOND WITH THE SOLUTION""")
     
-    speak(answer)
+    screen_cycle() 
+    speak(answer) 
     conversate(answer, 0)
 
 
@@ -210,7 +216,7 @@ if __name__ == "__main__":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
+        screen_cycle()
         if state == "see":
             see()
             if his[0] == his[1] == his[2] != 0:
@@ -223,3 +229,5 @@ if __name__ == "__main__":
 
         elif state == "interact":
             interact()
+
+        screen_cycle()
