@@ -3,17 +3,25 @@ from deepface import DeepFace
 import pyttsx3
 from bardapi import BardCookies
 import speech_recognition as sr
-import json
-import re
 from dotenv import load_dotenv
-import os
 from datetime import datetime
 import pygame
 import numpy as np
+import browser_cookie3
+
+# --disable-features=LockProfileCookieDatabase
+
+def get_cookies(domain):
+    Cookies={}
+    chromeCookies = list(browser_cookie3.chrome())
+    for cookie in chromeCookies:
+        if (domain in cookie.domain):
+            Cookies[cookie.name]=cookie.value
+    return Cookies
 
 log = lambda x: print(f"[{datetime.now()}] {x}")
 
-log("Anisha v2")
+log("Anisha Booting up")
 log("loading environment variables")
 load_dotenv()
 
@@ -21,8 +29,7 @@ log("Setting up video capture device")
 cap = cv2.VideoCapture(0)
 
 log("Setting up Bard")
-cookie_dict = {i["name"]: i['value'] for i in json.load(open("cookies.json"))}
-bard = BardCookies(cookie_dict=cookie_dict)
+bard = BardCookies(cookie_dict=get_cookies(".google.com"))
 
 log("Setting up text-to-speech engine")
 engine = pyttsx3.init()
@@ -81,7 +88,7 @@ def drawText(surface, text, color, rect, font, aa=False, bkg=None):
 def screen_cycle():
     screen.fill((255, 255, 255))
 
-    head = pygame.font.Font("Comfortaa.ttf", 96).render("Anisha v2", True, (0, 0, 0))
+    head = pygame.font.Font("Comfortaa.ttf", 96).render("Anisha", True, (0, 0, 0))
     rect = head.get_rect()
     rect.center = (w // 2, h // 12)
     screen.blit(head, rect)
