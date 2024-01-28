@@ -129,20 +129,27 @@ def speak(text):
 
 def ask_user():
     log("Asking user")
-    try:
-        change_text("User", "Recognizing Voice...")
-        screen_cycle()
-        with sr.Microphone() as source:
-            audio = r.listen(source, phrase_time_limit=5)
-        query = r.recognize_google(audio)
-        screen_cycle()
-        change_text("User", query)
-        screen_cycle()
-        return query
-    except sr.exceptions.UnknownValueError:
-        log("[ERROR] Couldn't hear user, Attempting again...")
-        speak("Sorry, can you please repeat yourself?")
-        return ask_user()
+    moveon = False
+    while not moveon:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_BACKSPACE]:
+            try:
+                change_text("User", "Recognizing Voice...")
+                screen_cycle()
+                with sr.Microphone() as source:
+                    audio = r.listen(source, phrase_time_limit=5)
+                query = r.recognize_google(audio)
+                screen_cycle()
+                change_text("User", query)
+                screen_cycle()
+                moveon = True
+                return query
+            except sr.exceptions.UnknownValueError:
+                log("[ERROR] Couldn't hear user, Attempting again...")
+                speak("Sorry, can you please repeat yourself?")
+                return ask_user()
+        else:
+            screen_cycle()
 
 def ask_bard(query):
     ans = bard.get_answer(query)['content'].replace("*", "")
