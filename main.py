@@ -111,7 +111,7 @@ def screen_cycle():
     rect.height = 240
     screen.blit(frame, rect)
 
-    text_rect = pygame.Rect(w // 2, h // 1.2, 640 / 1080 * w, 960 / 1920 * h)
+    text_rect = pygame.Rect(w // 2, h // 1.2, 800 / 1080 * w, 960 / 1920 * h)
     drawText(screen, current_text, (0, 0, 0), text_rect, pygame.font.Font("Comfortaa.ttf", 24))
     pygame.display.update()
 
@@ -217,7 +217,7 @@ def interact():
     answer = ask_bard(f"""Create a comforting, supportive and short minimal solution as an AI stress reliever addressing the following user query: 
 
 "{query}"
-KEEP IT UNDER 100 WORDS
+KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS
 PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO ASTERISKS NO EMOJIS NO IMAGES, DO NOT ASK THEM ANY QUESTIONS, JUST RESPOND WITH THE SOLUTION""")
     
     screen_cycle() 
