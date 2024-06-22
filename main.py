@@ -8,6 +8,8 @@ from datetime import datetime
 import pygame
 import numpy as np
 import browser_cookie3
+from threading import Thread
+
 
 # --disable-features=LockProfileCookieDatabase
 
@@ -86,8 +88,10 @@ def drawText(surface, text, color, rect, font, aa=False, bkg=None):
     return text
 
 def screen_cycle():
+    global state
     screen.fill((255, 255, 255))
 
+    # pygame.display.update()
     head = pygame.font.Font("Comfortaa.ttf", 96).render("Anisha", True, (0, 0, 0))
     rect = head.get_rect()
     rect.center = (w // 2, h // 12)
@@ -113,6 +117,10 @@ def screen_cycle():
 
     text_rect = pygame.Rect(w // 2, h // 1.2, 800 / 1080 * w, 960 / 1920 * h)
     drawText(screen, current_text, (0, 0, 0), text_rect, pygame.font.Font("Comfortaa.ttf", 24))
+    
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_ESCAPE]:
+        state = "see"
     pygame.display.update()
 
 def change_text(speaker, text):
@@ -120,7 +128,7 @@ def change_text(speaker, text):
     global current_speaker
     current_speaker=speaker
     current_text = text
-    screen_cycle()
+    # screen_cycle()
 
 def speak(text):
     change_text("Anisha", text)
@@ -129,27 +137,21 @@ def speak(text):
 
 def ask_user():
     log("Asking user")
-    moveon = False
-    while not moveon:
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_BACKSPACE]:
-            try:
-                change_text("User", "Recognizing Voice...")
-                screen_cycle()
-                with sr.Microphone() as source:
-                    audio = r.listen(source, phrase_time_limit=5)
-                query = r.recognize_google(audio)
-                screen_cycle()
-                change_text("User", query)
-                screen_cycle()
-                moveon = True
-                return query
-            except sr.exceptions.UnknownValueError:
-                log("[ERROR] Couldn't hear user, Attempting again...")
-                speak("Sorry, can you please repeat yourself?")
-                return ask_user()
-        else:
-            screen_cycle()
+    try:
+        change_text("User", "Recognizing Voice...")
+        # screen_cycle()
+        with sr.Microphone() as source:
+            audio = r.listen(source, phrase_time_limit=5)
+        query = r.recognize_google(audio)
+        # screen_cycle()
+        change_text("User", query)
+        # screen_cycle()
+        moveon = True
+        return query
+    except sr.exceptions.UnknownValueError:
+        log("[ERROR] Couldn't hear user, Attempting again...")
+        speak("Sorry, can you please repeat yourself?")
+        return ask_user()
 
 def ask_bard(query):
     ans = bard.get_answer(query)['content'].replace("*", "")
@@ -181,8 +183,14 @@ def see():
 def approach():
     global state
     speak(f"Hello There! Your current emotion is {emotion}, Do you want me to help you with anything?")
-    user = ask_user()
-    agree = ask_bard(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
+    if state != "see":
+        user = ask_user()
+    else:
+        return
+    if state != "see":
+        agree = ask_bard(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
+    else:
+        return
     
     if "false" in agree.lower():
         speak("Oh okay, have a nice day!")
@@ -211,26 +219,41 @@ def interact():
 
     speak(text)
 
-    query = ask_user()
+    if state != "see":
+        query = ask_user()
 
+    else:
+        return
     conversate(query, 1)
-    answer = ask_bard(f"""Create a comforting, supportive and short minimal solution as an AI stress reliever addressing the following user query: 
+    if state != "see":
+        answer = ask_bard(f"""Create a comforting, supportive and short minimal solution as an AI stress reliever addressing the following user query: 
 
 "{query}"
 KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS
 PROVIDE PLAIN TEXT RESPONSE ONLY, NO MARKDOWN, NO ASTERISKS NO EMOJIS NO IMAGES, DO NOT ASK THEM ANY QUESTIONS, JUST RESPOND WITH THE SOLUTION""")
     
-    screen_cycle() 
-    speak(answer) 
+    else:
+        return
+    # screen_cycle() 
+    if state != "see":
+        speak(answer) 
+    else:
+        return
     conversate(answer, 0)
 
+def loop():
+    while True:
+        screen_cycle()
 
 if __name__ == "__main__":
+    t = Thread(target=loop)
+    t.start()
+    # t.join()
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        screen_cycle()
+        # screen_cycle()
         if state == "see":
             see()
             keys = pygame.key.get_pressed()
@@ -239,6 +262,26 @@ if __name__ == "__main__":
                     state = "approach"
                     emotion = his[0]
                     his = [0, 0, 0]
+            elif keys[pygame.K_1]:
+                state = "approach"
+                emotion = "happy"
+                his = [0, 0, 0]
+            elif keys[pygame.K_2]:
+                state = "approach"
+                emotion = "sad"
+                his = [0, 0, 0]
+            elif keys[pygame.K_3]:
+                state = "approach"
+                emotion = "neutral"
+                his = [0, 0, 0]
+            elif keys[pygame.K_4]:
+                state = "approach"
+                emotion = "surprised"
+                his = [0, 0, 0]
+            elif keys[pygame.K_5]:
+                state = "approach"
+                emotion = "fearful"
+                his = [0, 0, 0]
 
         elif state == "approach":
             approach()
@@ -246,4 +289,4 @@ if __name__ == "__main__":
         elif state == "interact":
             interact()
 
-        screen_cycle()
+        # screen_cycle()
