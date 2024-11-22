@@ -1,25 +1,18 @@
 import cv2
 from deepface import DeepFace
 import pyttsx3
-from bardapi import BardCookies
 import speech_recognition as sr
 from dotenv import load_dotenv
 from datetime import datetime
 import pygame
 import numpy as np
-import browser_cookie3
 from threading import Thread
+import requests
+import os
 
 
 # --disable-features=LockProfileCookieDatabase
 
-def get_cookies(domain):
-    Cookies={}
-    chromeCookies = list(browser_cookie3.chrome())
-    for cookie in chromeCookies:
-        if (domain in cookie.domain):
-            Cookies[cookie.name]=cookie.value
-    return Cookies
 
 log = lambda x: print(f"[{datetime.now()}] {x}")
 
@@ -29,9 +22,6 @@ load_dotenv()
 
 log("Setting up video capture device")
 cap = cv2.VideoCapture(0)
-
-log("Setting up Bard")
-bard = BardCookies(cookie_dict=get_cookies(".google.com"))
 
 log("Setting up text-to-speech engine")
 engine = pyttsx3.init()
@@ -153,8 +143,34 @@ def ask_user():
         speak("Sorry, can you please repeat yourself?")
         return ask_user()
 
-def ask_bard(query):
-    ans = bard.get_answer(query)['content'].replace("*", "")
+def ask_gemini(query):
+    headers = {
+        'Content-Type': 'application/json',
+    }
+
+    params = {
+        'key': os.getenv('GEMINI_KEY'),
+    }
+
+    json_data = {
+        'contents': [
+            {
+                'parts': [
+                    {
+                        'text': query,
+                    },
+                ],
+            },
+        ],
+    }
+
+    response = requests.post(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+        params=params,
+        headers=headers,
+        json=json_data,
+    )
+    ans = response.json()['candidates'][0]['content']['parts'][0]['text'].replace("*", "")
     return ans
 
 def conversate(text, side):
@@ -188,7 +204,7 @@ def approach():
     else:
         return
     if state != "see":
-        agree = ask_bard(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
+        agree = ask_gemini(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
     else:
         return
     
@@ -208,7 +224,7 @@ def interact():
         text = "Do you have anymore questions? please answer in positive or negative tone"
         speak(text)
         user = ask_user()
-        agree = ask_bard(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
+        agree = ask_gemini(f"Tell me if the following is agreeing or not, ONLY OUTPUT TRUE OR FALSE, AND NOTHING ELSE \n{user}")
         if "false" in agree.lower():
             speak("Oh okay, have a nice day!")
             change_text("", "")
@@ -226,7 +242,7 @@ def interact():
         return
     conversate(query, 1)
     if state != "see":
-        answer = ask_bard(f"""Create a comforting, supportive and short minimal solution as an AI stress reliever addressing the following user query: 
+        answer = ask_gemini(f"""Create a comforting, supportive and short minimal solution as an AI stress reliever addressing the following user query: 
 
 "{query}"
 KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS, KEEP IT UNDER 100 WORDS
