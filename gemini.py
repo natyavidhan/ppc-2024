@@ -5,7 +5,7 @@ headers = {
 }
 
 params = {
-    'key': 'AIzaSyBf4pQt-XxzXI0DsApJ7DnzrJAVyI8jXmk',
+    'key': 'key',
 }
 
 json_data = {
